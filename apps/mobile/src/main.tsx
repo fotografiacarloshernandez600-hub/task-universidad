@@ -11,3 +11,5 @@ setupIonicReact();
 const start=()=>createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
 if (window.cordova) document.addEventListener('deviceready',start,{once:true});
 else start();
+
+if(import.meta.env.PROD&&!window.cordova&&location.protocol==='https:'&&'serviceWorker' in navigator){window.addEventListener('load',()=>{void navigator.serviceWorker.register('./sw.js').catch(console.error);});}
