@@ -10,5 +10,8 @@
     "dev:api": "npm run dev -w apps/api",
     "build:web": "npm run build -w apps/mobile",
     "test:api": "npm run test -w apps/api"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
