@@ -15,12 +15,12 @@ async function run():Promise<SyncResult>{
  try{
   await api.health();
   for(const task of (await local.tasks()).filter(t=>t.syncState==='pending')){
-    if(task.deleted)await api.deleteTask(task.id);else await api.saveTask(task);
-    await local.saveTask({...task,syncState:'synced'});uploaded++;
+    await api.saveTask(task);
+    const current=(await local.tasks()).find(x=>x.id===task.id);if(current?.updatedAt===task.updatedAt)await local.saveTask({...task,syncState:'synced'});uploaded++;
   }
   for(const row of (await local.academic()).filter(x=>x.syncState==='pending')){
-    if(row.deleted)await api.deleteAcademic(row.id);else await api.saveAcademic(row);
-    await local.saveAcademic({...row,syncState:'synced'});uploaded++;
+    await api.saveAcademic(row);
+    const current=(await local.academic()).find(x=>x.id===row.id);if(current?.updatedAt===row.updatedAt)await local.saveAcademic({...row,syncState:'synced'});uploaded++;
   }
   const remoteTasks=await api.listTasks();
   const localTasks=new Map((await local.tasks()).map(t=>[t.id,t]));
@@ -29,6 +29,6 @@ async function run():Promise<SyncResult>{
   const localAcademic=new Map((await local.academic()).map(a=>[a.id,a]));
   for(const remote of remoteAcademic){const previous=localAcademic.get(remote.id);if(!previous || (previous.syncState==='synced' && previous.updatedAt<remote.updatedAt)){await local.saveAcademic({...remote,syncState:'synced'} as AcademicRecord);downloaded++;}}
   const pending=(await local.tasks()).filter(x=>x.syncState==='pending').length+(await local.academic()).filter(x=>x.syncState==='pending').length;
-  await logEvent('info','SYNC_OK',uploaded+' enviados, '+downloaded+' recibidos');return {uploaded,downloaded,pending};
+  if(uploaded||downloaded)await logEvent('info','SYNC_OK',uploaded+' enviados, '+downloaded+' recibidos');return {uploaded,downloaded,pending};
  }catch(err){await logEvent('error','SYNC_FAILURE',String(err));throw err;}
 }
