@@ -1,6 +1,14 @@
 import type {Task,AcademicRecord} from '../models/types';
-const key='task-universitario-api-url';
-const DEFAULT=import.meta.env.VITE_API_URL || 'http://localhost:3001';
-export const apiSettings={get:()=>localStorage.getItem(key)||DEFAULT,set:(value:string)=>localStorage.setItem(key,value.replace(/\/$/,''))};
-async function request<T>(path:string,options:RequestInit={}):Promise<T>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),7000);try{const res=await fetch(apiSettings.get()+path,{...options,headers:{'Content-Type':'application/json',...options.headers},signal:controller.signal});if(!res.ok)throw new Error('HTTP '+res.status+' en '+path);return res.status===204?undefined as T:await res.json() as T;}finally{clearTimeout(timer);}}
-export const api={health:()=>request<{ok:boolean}>('/health'),listTasks:()=>request<Task[]>('/api/tasks'),saveTask:(t:Task)=>request<Task>('/api/tasks/'+encodeURIComponent(t.id),{method:'PUT',body:JSON.stringify(t)}),deleteTask:(id:string)=>request<void>('/api/tasks/'+encodeURIComponent(id),{method:'DELETE'}),listAcademic:()=>request<AcademicRecord[]>('/api/academic'),saveAcademic:(r:AcademicRecord)=>request<AcademicRecord>('/api/academic/'+encodeURIComponent(r.id),{method:'PUT',body:JSON.stringify(r)}),deleteAcademic:(id:string)=>request<void>('/api/academic/'+encodeURIComponent(id),{method:'DELETE'})};
+import {supabase,supabaseUrl} from './supabase';
+export const apiSettings={get:()=>supabaseUrl,set:(_value:string)=>{}};
+async function uid(){const {data,error}=await supabase.auth.getSession();if(error||!data.session)throw new Error('Sesión requerida');return data.session.user.id;}
+function check(error:{message:string}|null){if(error)throw new Error(error.message);}
+export const api={
+ async health(){const {error}=await supabase.from('tasks').select('id').limit(1);check(error);return {ok:true};},
+ async listTasks():Promise<Task[]>{const user=await uid();const {data,error}=await supabase.from('tasks').select('*').eq('user_id',user);check(error);return (data||[]).map(r=>({id:r.id,title:r.title,description:r.description||'',category:r.category||'Académica',priority:r.priority,dueDate:r.due_date||'',completed:!!r.completed,deleted:!!r.deleted,createdAt:r.created_at,updatedAt:r.updated_at,syncState:'synced'}));},
+ async saveTask(t:Task){const user=await uid();const {error}=await supabase.from('tasks').upsert({id:t.id,user_id:user,title:t.title,description:t.description,category:t.category,priority:t.priority,due_date:t.dueDate||null,completed:t.completed,deleted:t.deleted,created_at:t.createdAt,updated_at:t.updatedAt});check(error);return t;},
+ async deleteTask(id:string){const user=await uid();const {error}=await supabase.from('tasks').update({deleted:true,updated_at:new Date().toISOString()}).eq('id',id).eq('user_id',user);check(error);},
+ async listAcademic():Promise<AcademicRecord[]>{const user=await uid();const {data,error}=await supabase.from('academic_sync').select('payload').eq('user_id',user);check(error);return (data||[]).map(r=>({...r.payload,syncState:'synced'}));},
+ async saveAcademic(r:AcademicRecord){const user=await uid();const {error}=await supabase.from('academic_sync').upsert({id:r.id,user_id:user,payload:r,updated_at:r.updatedAt});check(error);return r;},
+ async deleteAcademic(id:string){const user=await uid();const {data,error}=await supabase.from('academic_sync').select('payload').eq('id',id).eq('user_id',user).maybeSingle();check(error);if(data){const now=new Date().toISOString();const result=await supabase.from('academic_sync').update({payload:{...data.payload,deleted:true,updatedAt:now},updated_at:now}).eq('id',id).eq('user_id',user);check(result.error);}}
+};
