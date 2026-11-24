@@ -10,7 +10,7 @@ Monorepo con **Ionic React + Apache Cordova + TypeScript**, arquitectura **MVVM*
 - Plan de inglés de **4 u 8 módulos**, desde inscripción hasta acreditación y constancia.
 - Registro CEDA / CEFODE, horarios de actividad deportiva o cultural y constancia.
 - Agenda académica y bitácora de eventos y errores.
-- SQLite nativo en Android mediante `cordova-plugin-sqlite-storage`.
+- SQLite nativo en Android mediante `cordova-sqlite-storage`.
 - SQLite mediante sql.js/WebAssembly con base binaria guardada en **IndexedDB** en web; el WASM forma parte del bundle, sin descargarlo de CDN.
 - API REST Express (GET, POST, PUT, PATCH, DELETE) y sincronización básica con borrados lógicos.
 - Estado pendiente de sincronización, modo local y reintentos manuales/al detectar Internet.
