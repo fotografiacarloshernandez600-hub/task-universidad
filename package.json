@@ -1,0 +1,14 @@
+{
+  "name": "task-universidad",
+  "private": true,
+  "workspaces": [
+    "apps/mobile",
+    "apps/api"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w apps/mobile",
+    "dev:api": "npm run dev -w apps/api",
+    "build:web": "npm run build -w apps/mobile",
+    "test:api": "npm run test -w apps/api"
+  }
+}

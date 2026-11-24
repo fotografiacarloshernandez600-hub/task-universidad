@@ -1,0 +1,10 @@
+node_modules/
+**/node_modules/
+**/www/
+**/dist/
+**/platforms/
+**/plugins/
+**/.env
+**/*.db
+**/*.sqlite
+.DS_Store
