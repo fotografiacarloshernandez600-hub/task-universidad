@@ -36,5 +36,8 @@
       "cordova-sqlite-storage": {},
       "cordova-plugin-network-information": {}
     }
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
